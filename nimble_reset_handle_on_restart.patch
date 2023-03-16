@@ -1,0 +1,13 @@
+diff --git a/nimble/host/src/ble_att_svr.c b/nimble/host/src/ble_att_svr.c
+index afcf9037..b087bebe 100644
+--- a/nimble/host/src/ble_att_svr.c
++++ b/nimble/host/src/ble_att_svr.c
+@@ -2698,6 +2698,8 @@ ble_att_svr_start(void)
+         }
+     }
+ 
++    ble_att_svr_id = 0;
++
+     return 0;
+ 
+ err:

@@ -1,0 +1,30 @@
+commit 2e9045089bd9a87805401fa0f027238eeb5df27b
+Author: Deomid "rojer" Ryabkov <rojer@rojer.me>
+Date:   Sat Apr 16 15:54:37 2022 +0100
+
+    ip_napt_maint: Fix timestamp overflow handling
+    
+    s_last_now was not being updated once overflow happened.
+
+diff --git a/src/core/ipv4/ip4_napt.c b/src/core/ipv4/ip4_napt.c
+index a364f424..f614bf35 100644
+--- a/src/core/ipv4/ip4_napt.c
++++ b/src/core/ipv4/ip4_napt.c
+@@ -959,15 +959,14 @@ ip_napt_maint(void)
+        * but it's fine for our purposes. */
+       t->last = now;
+     }
+-    /* Skip until next tick, nothing to be done here anyway. */
+-    return;
+   }
+   ip_napt_gc(now, false /* make_room */);
+   s_last_now = now;
+ }
+ 
+ static void
+-ip_napt_tmr(void *arg) {
++ip_napt_tmr(void *arg)
++{
+   ip_napt_maint();
+   sys_timeout(NAPT_TMR_INTERVAL, ip_napt_tmr, arg);
+ }
