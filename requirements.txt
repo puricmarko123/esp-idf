@@ -10,7 +10,7 @@ pyserial>=3.3
 future>=0.15.2
 
 # debug
-cffi>=1.15.1
+cffi=1.15.0
 # debug
 
 cryptography>=2.1.4
