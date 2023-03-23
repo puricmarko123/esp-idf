@@ -2698,8 +2698,6 @@ ble_att_svr_start(void)
         }
     }
 
-    ble_att_svr_id = 0;
-
     return 0;
 
 err:
