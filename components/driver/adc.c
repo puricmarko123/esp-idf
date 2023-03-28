@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "sdkconfig.h"
-//#include "esp_intr_alloc.h"
+#include "esp_intr_alloc.h"
 #include "esp_log.h"
 #include "esp_pm.h"
 #include "esp_check.h"
