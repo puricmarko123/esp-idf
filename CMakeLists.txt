@@ -79,6 +79,8 @@ if(CONFIG_COMPILER_DISABLE_GCC8_WARNINGS)
                                 "-Wno-int-in-bool-context")
 endif()
 
+list(APPEND compile_options "-Wno-error=missing-braces")
+
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     list(APPEND c_compile_options "-Wno-old-style-declaration")
 endif()
