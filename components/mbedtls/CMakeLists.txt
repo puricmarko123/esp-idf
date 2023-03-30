@@ -235,4 +235,3 @@ if(CONFIG_ATCA_MBEDTLS_ECDSA)
     idf_component_get_property(cryptoauthlib esp-cryptoauthlib COMPONENT_LIB)
     target_link_libraries(${COMPONENT_LIB} ${linkage_type} ${cryptoauthlib})
 endif()
->>>>>>> 7edc3e878fc42aecf9606c584ff1122a0ae2059d
