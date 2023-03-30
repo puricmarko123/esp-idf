@@ -45,7 +45,6 @@
 #include "lwip/snmp.h"
 #include "lwip/ethip6.h"
 #include "netif/etharp.h"
-#include "netif/wlanif.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -53,6 +52,9 @@
 #include "esp_netif.h"
 #include "esp_netif_net_stack.h"
 #include "esp_compiler.h"
+
+#if CONFIG_ESP32_WIFI_ENABLED
+#include "netif/wlanif.h"
 
 #if !ESP_L2_TO_L3_COPY
 /**
@@ -276,3 +278,4 @@ err_t wlanif_init_ap(struct netif *netif) {
   netif->name[1] = 'p';
   return wlanif_init(netif);
 }
+#endif // CONFIG_ESP32_WIFI_ENABLED

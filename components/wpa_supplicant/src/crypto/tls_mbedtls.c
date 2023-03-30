@@ -17,8 +17,9 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/debug.h"
 #ifdef ESPRESSIF_USE
-#include "mbedtls/esp_debug.h"
-#include "mbedtls/esp_config.h"
+#undef ESPRESSIF_USE
+//#include "mbedtls/esp_debug.h"
+//#include "mbedtls/esp_config.h"
 #else
 #include "mbedtls/config.h"
 #endif
@@ -652,7 +653,11 @@ struct wpabuf * tls_connection_handshake(void *tls_ctx,
 			if (tls->ssl.handshake) {
 				os_memcpy(conn->randbytes, tls->ssl.handshake->randbytes,
 					  TLS_RANDOM_LEN * 2);
+#if MBEDTLS_VERSION_NUMBER >= 0x021C0000
 				conn->mac = tls->ssl.handshake->ciphersuite_info->mac;
+#else
+				conn->mac = tls->ssl.transform_negotiate->ciphersuite_info->mac;
+#endif
 			}
 		}
 		ret = mbedtls_ssl_handshake_step(&tls->ssl);

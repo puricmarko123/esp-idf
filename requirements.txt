@@ -1,11 +1,6 @@
 # This is a list of python packages needed for ESP-IDF. This file is used with pip.
 # Please see the Get Started section of the ESP-IDF Programming Guide for further information.
 #
-
-# debug
-#cffi==1.15.1
-# debug
-
 setuptools>=21
 # The setuptools package is required to install source distributions and on some systems is not installed by default.
 # Please keep it as the first item of this list. Version 21 is required to handle PEP 508 environment markers.
@@ -24,15 +19,15 @@ pyparsing>=2.0.3,<2.4.0
 pyelftools>=0.22
 idf-component-manager~=1.0
 
-gdbgui==0.13.2.0
+#gdbgui==0.13.2.0
 # 0.13.2.1 supports Python 3.6+ only
 # Windows is not supported since 0.14.0.0. See https://github.com/cs01/gdbgui/issues/348
-pygdbmi<=0.9.0.2
+#pygdbmi<=0.9.0.2
 # The pygdbmi required max version 0.9.0.2 since 0.9.0.3 is not compatible with latest gdbgui (>=0.13.2.0)
 # A compatible Socket.IO should be used. See https://github.com/miguelgrinberg/python-socketio/issues/578
-python-socketio<5
-jinja2<3.1  # See https://github.com/espressif/esp-idf/issues/8760
-itsdangerous<2.1
+#python-socketio<5
+#jinja2<3.1  # See https://github.com/espressif/esp-idf/issues/8760
+#itsdangerous<2.1
 
 kconfiglib==13.7.1
 

@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#if CONFIG_ETH_ENABLED
+
 #include "esp_eth.h"
 #include "esp_netif.h"
 #include "esp_netif_net_stack.h"
@@ -240,3 +242,4 @@ err_t ethernetif_init(struct netif *netif)
 
     return ERR_OK;
 }
+#endif // CONFIG_ETH_ENABLED

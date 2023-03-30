@@ -18,7 +18,7 @@
 #include "eap_config.h"
 #include "eap_fast_pac.h"
 
-#include "eap_fast_pac.c"
+//#include "eap_fast_pac.c"
 
 /* TODO:
  * - test session resumption and enable it if it interoperates

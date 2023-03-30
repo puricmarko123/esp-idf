@@ -46,7 +46,7 @@ esp_err_t rtc_gpio_deinit(gpio_num_t gpio_num)
     return ESP_OK;
 }
 
-esp_err_t rtc_gpio_set_level(gpio_num_t gpio_num, uint32_t level)
+esp_err_t IRAM_ATTR rtc_gpio_set_level(gpio_num_t gpio_num, uint32_t level)
 {
     ESP_RETURN_ON_FALSE(rtc_gpio_is_valid_gpio(gpio_num), ESP_ERR_INVALID_ARG, RTCIO_TAG, "RTCIO number error");
     RTCIO_ENTER_CRITICAL();
@@ -56,7 +56,7 @@ esp_err_t rtc_gpio_set_level(gpio_num_t gpio_num, uint32_t level)
     return ESP_OK;
 }
 
-uint32_t rtc_gpio_get_level(gpio_num_t gpio_num)
+uint32_t IRAM_ATTR rtc_gpio_get_level(gpio_num_t gpio_num)
 {
     ESP_RETURN_ON_FALSE(rtc_gpio_is_valid_gpio(gpio_num), ESP_ERR_INVALID_ARG, RTCIO_TAG, "RTCIO number error");
     return rtcio_hal_get_level(rtc_io_number_get(gpio_num));

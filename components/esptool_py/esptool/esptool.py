@@ -57,7 +57,7 @@ except Exception:
         raise
 
 
-__version__ = "3.3.2"
+__version__ = "3.3.1-dev"
 
 MAX_UINT32 = 0xffffffff
 MAX_UINT24 = 0xffffff
@@ -73,7 +73,6 @@ ERASE_WRITE_TIMEOUT_PER_MB = 40       # timeout (per megabyte) for erasing and w
 MEM_END_ROM_TIMEOUT = 0.05            # special short timeout for ESP_MEM_END, as it may never respond
 DEFAULT_SERIAL_WRITE_TIMEOUT = 10     # timeout for serial port write
 DEFAULT_CONNECT_ATTEMPTS = 7          # default number of times to try connection
-WRITE_BLOCK_ATTEMPTS = 3              # number of times to try writing a data block
 
 SUPPORTED_CHIPS = ['esp8266', 'esp32', 'esp32s2', 'esp32s3beta2', 'esp32s3', 'esp32c3', 'esp32c6beta', 'esp32h2beta1', 'esp32h2beta2', 'esp32c2']
 
@@ -119,37 +118,13 @@ def get_default_connected_device(serial_list, port, connect_attempts, initial_ba
             if port is not None:
                 raise
             print("%s failed to connect: %s" % (each_port, err))
-            if _esp and _esp._port:
-                _esp._port.close()
             _esp = None
     return _esp
 
 
-DETECTED_FLASH_SIZES = {
-    0x12: "256KB",
-    0x13: "512KB",
-    0x14: "1MB",
-    0x15: "2MB",
-    0x16: "4MB",
-    0x17: "8MB",
-    0x18: "16MB",
-    0x19: "32MB",
-    0x1A: "64MB",
-    0x1B: "128MB",
-    0x1C: "256MB",
-    0x20: "64MB",
-    0x21: "128MB",
-    0x22: "256MB",
-    0x32: "256KB",
-    0x33: "512KB",
-    0x34: "1MB",
-    0x35: "2MB",
-    0x36: "4MB",
-    0x37: "8MB",
-    0x38: "16MB",
-    0x39: "32MB",
-    0x3A: "64MB",
-}
+DETECTED_FLASH_SIZES = {0x12: '256KB', 0x13: '512KB', 0x14: '1MB',
+                        0x15: '2MB', 0x16: '4MB', 0x17: '8MB',
+                        0x18: '16MB', 0x19: '32MB', 0x1a: '64MB', 0x21: '128MB'}
 
 
 def check_supported_function(func, check_func):
@@ -821,52 +796,26 @@ class ESPLoader(object):
             print("Took %.2fs to erase flash block" % (time.time() - t))
         return num_blocks
 
+    """ Write block to flash """
     def flash_block(self, data, seq, timeout=DEFAULT_TIMEOUT):
-        """Write block to flash, retry if fail"""
-        for attempts_left in range(WRITE_BLOCK_ATTEMPTS - 1, -1, -1):
-            try:
-                self.check_command(
-                    "write to target Flash after seq %d" % seq,
-                    self.ESP_FLASH_DATA,
-                    struct.pack("<IIII", len(data), seq, 0, 0) + data,
-                    self.checksum(data),
-                    timeout=timeout,
-                )
-                break
-            except FatalError:
-                if attempts_left:
-                    self.trace(
-                        "Block write failed, "
-                        "retrying with {} attempts left".format(attempts_left)
-                    )
-                else:
-                    raise
+        self.check_command("write to target Flash after seq %d" % seq,
+                           self.ESP_FLASH_DATA,
+                           struct.pack('<IIII', len(data), seq, 0, 0) + data,
+                           self.checksum(data),
+                           timeout=timeout)
 
+    """ Encrypt before writing to flash """
     def flash_encrypt_block(self, data, seq, timeout=DEFAULT_TIMEOUT):
-        """Encrypt, write block to flash, retry if fail"""
         if isinstance(self, (ESP32S2ROM, ESP32C3ROM, ESP32S3ROM, ESP32H2BETA1ROM, ESP32C2ROM, ESP32H2BETA2ROM)) and not self.IS_STUB:
             # ROM support performs the encrypted writes via the normal write command,
             # triggered by flash_begin(begin_rom_encrypted=True)
             return self.flash_block(data, seq, timeout)
 
-        for attempts_left in range(WRITE_BLOCK_ATTEMPTS - 1, -1, -1):
-            try:
-                self.check_command(
-                    "Write encrypted to target Flash after seq %d" % seq,
-                    self.ESP_FLASH_ENCRYPT_DATA,
-                    struct.pack("<IIII", len(data), seq, 0, 0) + data,
-                    self.checksum(data),
-                    timeout=timeout,
-                )
-                break
-            except FatalError:
-                if attempts_left:
-                    self.trace(
-                        "Encrypted block write failed, "
-                        "retrying with {} attempts left".format(attempts_left)
-                    )
-                else:
-                    raise
+        self.check_command("Write encrypted to target Flash after seq %d" % seq,
+                           self.ESP_FLASH_ENCRYPT_DATA,
+                           struct.pack('<IIII', len(data), seq, 0, 0) + data,
+                           self.checksum(data),
+                           timeout=timeout)
 
     """ Leave flash mode and run/reboot """
     def flash_finish(self, reboot=False):
@@ -976,27 +925,11 @@ class ESPLoader(object):
             print("Took %.2fs to erase flash block" % (time.time() - t))
         return num_blocks
 
+    """ Write block to flash, send compressed """
     @stub_and_esp32_function_only
     def flash_defl_block(self, data, seq, timeout=DEFAULT_TIMEOUT):
-        """Write block to flash, send compressed, retry if fail"""
-        for attempts_left in range(WRITE_BLOCK_ATTEMPTS - 1, -1, -1):
-            try:
-                self.check_command(
-                    "write compressed data to flash after seq %d" % seq,
-                    self.ESP_FLASH_DEFL_DATA,
-                    struct.pack("<IIII", len(data), seq, 0, 0) + data,
-                    self.checksum(data),
-                    timeout=timeout,
-                )
-                break
-            except FatalError:
-                if attempts_left:
-                    self.trace(
-                        "Compressed block write failed, "
-                        "retrying with {} attempts left".format(attempts_left)
-                    )
-                else:
-                    raise
+        self.check_command("write compressed data to flash after seq %d" % seq,
+                           self.ESP_FLASH_DEFL_DATA, struct.pack('<IIII', len(data), seq, 0, 0) + data, self.checksum(data), timeout=timeout)
 
     """ Leave compressed flash mode and run/reboot """
     @stub_and_esp32_function_only
@@ -1693,7 +1626,6 @@ class ESP32ROM(ESPLoader):
             4: "ESP32-U4WDH",
             5: "ESP32-PICO-V3" if rev3 else "ESP32-PICO-D4",
             6: "ESP32-PICO-V3-02",
-            7: "ESP32-D0WDR2-V3",
         }.get(pkg_version, "unknown ESP32")
 
         # ESP32-D0WD-V3, ESP32-D0WDQ6-V3
@@ -2036,7 +1968,6 @@ class ESP32S2ROM(ESP32ROM):
             self._setRTS(False)
             time.sleep(0.2)
         else:
-            time.sleep(0.1)
             self._setRTS(False)
 
 
@@ -2207,7 +2138,6 @@ class ESP32S3ROM(ESP32ROM):
             self._setRTS(False)
             time.sleep(0.2)
         else:
-            time.sleep(0.1)
             self._setRTS(False)
 
 
@@ -2486,8 +2416,7 @@ class ESP32C2ROM(ESP32C3ROM):
     DROM_MAP_START = 0x3c000000
     DROM_MAP_END   = 0x3c400000
 
-    # Magic value for ESP32C2 ECO0 and ECO1 respectively
-    CHIP_DETECT_MAGIC_VALUE = [0x6F51306F, 0x7c41a06f]
+    CHIP_DETECT_MAGIC_VALUE = [0x6f51306f]
 
     EFUSE_BASE = 0x60008800
     MAC_EFUSE_REG  = EFUSE_BASE + 0x040
@@ -2513,16 +2442,6 @@ class ESP32C2ROM(ESP32C3ROM):
         chip_revision = self.get_chip_revision()
 
         return "%s (revision %d)" % (chip_name, chip_revision)
-
-    def get_chip_revision(self):
-        si = self.get_security_info()
-        return si["api_version"]
-
-    def _post_connect(self):
-        # ESP32C2 ECO0 is no longer supported by the flasher stub
-        if self.get_chip_revision() == 0:
-            self.stub_is_disabled = True
-            self.IS_STUB = False
 
 
 class ESP32C6BETAROM(ESP32C3ROM):
@@ -2869,7 +2788,7 @@ class BaseFirmwareImage(object):
             if segment_data[patch_offset:patch_offset + self.SHA256_DIGEST_LEN] != b'\x00' * self.SHA256_DIGEST_LEN:
                 raise FatalError('Contents of segment at SHA256 digest offset 0x%x are not all zero. Refusing to overwrite.' %
                                  self.elf_sha256_offset)
-            assert len(self.elf_sha256) == self.SHA256_DIGEST_LEN
+            assert(len(self.elf_sha256) == self.SHA256_DIGEST_LEN)
             segment_data = segment_data[0:patch_offset] + self.elf_sha256 + \
                 segment_data[patch_offset + self.SHA256_DIGEST_LEN:]
         return segment_data
@@ -3319,8 +3238,6 @@ class ESP32FirmwareImage(BaseFirmwareImage):
         if chip_id != self.ROM_LOADER.IMAGE_CHIP_ID:
             print(("Unexpected chip id in image. Expected %d but value was %d. "
                    "Is this image for a different chip model?") % (self.ROM_LOADER.IMAGE_CHIP_ID, chip_id))
-
-        self.min_rev = fields[5]
 
         # reserved fields in the middle should all be zero
         if any(f for f in fields[6:-1] if f != 0):
@@ -3809,18 +3726,6 @@ class FatalError(RuntimeError):
             0x109: 'CRC or checksum was invalid',
             0x10A: 'Version was invalid',
             0x10B: 'MAC address was invalid',
-            # Flasher stub error codes
-            0xC000: 'Bad data length',
-            0xC100: 'Bad data checksum',
-            0xC200: 'Bad blocksize',
-            0xC300: 'Invalid command',
-            0xC400: 'Failed SPI operation',
-            0xC500: 'Failed SPI unlock',
-            0xC600: 'Not in flash mode',
-            0xC700: 'Inflate error',
-            0xC800: 'Not enough data',
-            0xC900: 'Too much data',
-            0xFF00: 'Command not implemented',
         }
 
         err_code = struct.unpack(">H", result[:2])
@@ -5435,38 +5340,38 @@ aRigVPiH0389bOppmJxf29HBvOaGXWb1VY3f9GGrYidh197QQZNXauoDbgw2qKOgilI7CLxqHiHe0Gnp
 ro758Wd5BnYp7TYXfRQkJ6/30EJPUMkkaKIn0xpN9OTkCO6enO6hnE5e4DLa6L2LqtNGJxow+3/cohcuf3w/z2/w2qU1aRpZm0UmXKmu5jcfm8F+v5eFwTKf5/p+JjAVPGlfhrtSjE0iZ6LF/wCAbuTq\
 """)))
 ESP32C2ROM.STUB_CODE = eval(zlib.decompress(base64.b64decode(b"""
-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\
+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\
-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\
+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\
 """)))
 
 

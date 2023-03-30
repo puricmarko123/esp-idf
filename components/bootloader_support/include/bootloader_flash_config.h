@@ -53,10 +53,11 @@ void bootloader_flash_clock_config(const esp_image_header_t* pfhdr);
  * @brief Configure SPI flash gpio, include the IO matrix and drive strength configuration.
  *
  * @param pfhdr Pointer to App image header, from where to fetch flash settings.
+ * @param pkg_ver Result of bootloader_common_get_chip_ver_pkg().
  *
  * @return None
  */
-void bootloader_flash_gpio_config(const esp_image_header_t* pfhdr);
+void bootloader_flash_gpio_config(const esp_image_header_t* pfhdr, uint32_t pkg_ver);
 
 /**
  * @brief Configure SPI flash read dummy based on different mode and frequency.
@@ -81,6 +82,8 @@ void bootloader_flash_dummy_config(const esp_image_header_t* pfhdr);
  * @return Pin number to use, or -1 if the default should be kept
  */
 int bootloader_flash_get_wp_pin(void);
+
+void bootloader_init_flash_configure(const esp_image_header_t* pfhdr, uint32_t pkg_ver);
 #endif
 
 #ifdef __cplusplus

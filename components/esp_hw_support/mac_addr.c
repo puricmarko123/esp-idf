@@ -71,7 +71,6 @@ esp_err_t esp_efuse_mac_get_custom(uint8_t *mac)
     }
     size_t size = size_bits / 8;
     if (mac[0] == 0 && memcmp(mac, &mac[1], size - 1) == 0) {
-        ESP_LOGE(TAG, "eFuse MAC_CUSTOM is empty");
         return ESP_ERR_INVALID_MAC;
     }
 #if (ESP_MAC_ADDRESS_LEN == 8)
@@ -86,7 +85,6 @@ esp_err_t esp_efuse_mac_get_custom(uint8_t *mac)
     uint8_t version;
     esp_efuse_read_field_blob(ESP_EFUSE_MAC_CUSTOM_VER, &version, 8);
     if (version != 1) {
-        ESP_LOGE(TAG, "Base MAC address from BLK3 of EFUSE version error, version = %d", version);
         return ESP_ERR_INVALID_VERSION;
     }
 

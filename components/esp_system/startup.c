@@ -39,7 +39,9 @@
 // Headers for other components init functions
 #include "nvs_flash.h"
 #include "esp_phy_init.h"
+#if CONFIG_ESP32_WIFI_ENABLED
 #include "esp_coexist_internal.h"
+#endif
 
 #if CONFIG_ESP_COREDUMP_ENABLE
 #include "esp_core_dump.h"
@@ -61,16 +63,22 @@
 #if CONFIG_IDF_TARGET_ESP32
 #include "esp32/clk.h"
 #include "esp32/spiram.h"
+#include "esp32/rom/spi_flash.h"
+#include "bootloader_flash_config.h"
 #elif CONFIG_IDF_TARGET_ESP32S2
 #include "esp32s2/clk.h"
 #include "esp32s2/spiram.h"
+#include "esp32s2/rom/spi_flash.h"
 #elif CONFIG_IDF_TARGET_ESP32S3
 #include "esp32s3/clk.h"
 #include "esp32s3/spiram.h"
+#include "esp32s3/rom/spi_flash.h"
 #elif CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/clk.h"
+#include "esp32c3/rom/spi_flash.h"
 #elif CONFIG_IDF_TARGET_ESP32H2
 #include "esp32h2/clk.h"
+#include "esp32h2/rom/spi_flash.h"
 #endif
 /***********************************************/
 
@@ -316,6 +324,19 @@ static void do_core_init(void)
 
     err = esp_pthread_init();
     assert(err == ESP_OK && "Failed to init pthread module!");
+
+    // Typically this would've been done by the bootloader already
+    // unless BL is compiled with a different flash mode. It only makes a difference
+    // if pin configuration is non-standard, e.g. in case of ESP32-U4WDH
+    // (WP pin 7, SPI config 0x0b408446).
+#if CONFIG_ESPTOOLPY_FLASHMODE_QIO || CONFIG_ESPTOOLPY_FLASHMODE_QOUT
+    const uint32_t spiconfig = esp_rom_efuse_get_flash_gpio_info();
+#if CONFIG_IDF_TARGET_ESP32
+    esp_rom_spiflash_select_qio_pins(bootloader_flash_get_wp_pin(), spiconfig);
+#else
+    esp_rom_spiflash_select_qio_pins(esp_rom_efuse_get_flash_wp_gpio(), spiconfig);
+#endif
+#endif
 
     spi_flash_init();
     /* init default OS-aware flash access critical section */

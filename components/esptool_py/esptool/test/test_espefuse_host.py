@@ -186,8 +186,8 @@ class TestReadProtectionCommands(EfuseTestCase):
             count_protects = 1
         else:
             self.espefuse_py('burn_efuse \
-                              KEY_PURPOSE_0 HMAC_UP \
-                              KEY_PURPOSE_1 XTS_AES_128_KEY \
+                              KEY_PURPOSE_0 XTS_AES_256_KEY_1 \
+                              KEY_PURPOSE_1 XTS_AES_256_KEY_2 \
                               KEY_PURPOSE_2 XTS_AES_128_KEY \
                               KEY_PURPOSE_3 HMAC_DOWN_ALL \
                               KEY_PURPOSE_4 HMAC_DOWN_JTAG \
@@ -275,16 +275,12 @@ class TestWriteProtectionCommands(EfuseTestCase):
                            DIS_CAN SOFT_DIS_JTAG DIS_DOWNLOAD_MANUAL_ENCRYPT USB_EXCHG_PINS
                            WDT_DELAY_SEL SPI_BOOT_CRYPT_CNT SECURE_BOOT_KEY_REVOKE0
                            SECURE_BOOT_KEY_REVOKE1 SECURE_BOOT_KEY_REVOKE2 KEY_PURPOSE_0 KEY_PURPOSE_1 KEY_PURPOSE_2 KEY_PURPOSE_3 KEY_PURPOSE_4 KEY_PURPOSE_5
-                           SECURE_BOOT_EN SECURE_BOOT_AGGRESSIVE_REVOKE FLASH_TPUW DIS_DOWNLOAD_MODE DIS_DIRECT_BOOT DIS_USB_SERIAL_JTAG_ROM_PRINT
-                           DIS_USB_SERIAL_JTAG_DOWNLOAD_MODE ENABLE_SECURITY_DOWNLOAD UART_PRINT_CONTROL
+                           SECURE_BOOT_EN SECURE_BOOT_AGGRESSIVE_REVOKE FLASH_TPUW DIS_DOWNLOAD_MODE DIS_LEGACY_SPI_BOOT UART_PRINT_CHANNEL
+                           DIS_USB_DOWNLOAD_MODE ENABLE_SECURITY_DOWNLOAD UART_PRINT_CONTROL
                            MAC SPI_PAD_CONFIG_CLK SPI_PAD_CONFIG_Q SPI_PAD_CONFIG_D SPI_PAD_CONFIG_CS SPI_PAD_CONFIG_HD SPI_PAD_CONFIG_WP SPI_PAD_CONFIG_DQS
                            SPI_PAD_CONFIG_D4 SPI_PAD_CONFIG_D5 SPI_PAD_CONFIG_D6 SPI_PAD_CONFIG_D7 WAFER_VERSION PKG_VERSION BLOCK1_VERSION OPTIONAL_UNIQUE_ID
                            BLOCK2_VERSION BLOCK_USR_DATA BLOCK_KEY0 BLOCK_KEY1 BLOCK_KEY2 BLOCK_KEY3 BLOCK_KEY4 BLOCK_KEY5'''
             efuse_lists2 = 'RD_DIS DIS_ICACHE'
-        if chip_target == "esp32s2":
-            efuse_lists = efuse_lists.replace("DIS_USB_SERIAL_JTAG_DOWNLOAD_MODE", "DIS_USB_DOWNLOAD_MODE")
-            efuse_lists = efuse_lists.replace("DIS_DIRECT_BOOT", "DIS_LEGACY_SPI_BOOT")
-            efuse_lists = efuse_lists.replace("DIS_USB_SERIAL_JTAG_ROM_PRINT", "UART_PRINT_CHANNEL")
         self.espefuse_py('write_protect_efuse {}'.format(efuse_lists))
         output = self.espefuse_py('write_protect_efuse {}'.format(efuse_lists2))
         self.assertEqual(2, output.count("is already write protected"))
@@ -519,20 +515,19 @@ class TestBurnKeyCommands(EfuseTestCase):
 
     @unittest.skipUnless(chip_target in ["esp32s2", "esp32s3", "esp32s3beta1", "esp32c3", "esp32h2", "esp32h2beta1"], "Only chip with 6 keys")
     def test_burn_key_with_6_keys(self):
-        cmd = 'burn_key \
-               BLOCK_KEY0 images/efuse/256bit   XTS_AES_256_KEY_1 \
-               BLOCK_KEY1 images/efuse/256bit_1 XTS_AES_256_KEY_2 \
-               BLOCK_KEY2 images/efuse/256bit_2 XTS_AES_128_KEY'
-        if chip_target == 'esp32c3':
-            cmd = cmd.replace('XTS_AES_256_KEY_1', 'XTS_AES_128_KEY')
-            cmd = cmd.replace('XTS_AES_256_KEY_2', 'XTS_AES_128_KEY')
-        self.espefuse_py(cmd + ' --no-read-protect --no-write-protect')
+        self.espefuse_py('burn_key \
+                          BLOCK_KEY0 images/efuse/256bit   XTS_AES_256_KEY_1 \
+                          BLOCK_KEY1 images/efuse/256bit_1 XTS_AES_256_KEY_2 \
+                          BLOCK_KEY2 images/efuse/256bit_2 XTS_AES_128_KEY   --no-read-protect --no-write-protect')
         output = self.espefuse_py('summary -d')
         self.check_data_block_in_log(output, "images/efuse/256bit", reverse_order=True)
         self.check_data_block_in_log(output, "images/efuse/256bit_1", reverse_order=True)
         self.check_data_block_in_log(output, "images/efuse/256bit_2", reverse_order=True)
 
-        self.espefuse_py(cmd)
+        self.espefuse_py('burn_key \
+                          BLOCK_KEY0 images/efuse/256bit   XTS_AES_256_KEY_1 \
+                          BLOCK_KEY1 images/efuse/256bit_1 XTS_AES_256_KEY_2 \
+                          BLOCK_KEY2 images/efuse/256bit_2 XTS_AES_128_KEY')
         output = self.espefuse_py('summary -d')
         self.assertIn('[4 ] read_regs: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000', output)
         self.assertIn('[5 ] read_regs: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000', output)

@@ -53,7 +53,7 @@ enum tlsf_config
 	** values require more memory in the control structure. Values of
 	** 4 or 5 are typical.
 	*/
-	SL_INDEX_COUNT_LOG2  = 5,
+	SL_INDEX_COUNT_LOG2  = 4,
 
 	/* All allocation sizes and addresses are aligned to 4 bytes. */
 	ALIGN_SIZE_LOG2 = 2,

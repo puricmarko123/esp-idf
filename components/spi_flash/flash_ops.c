@@ -289,7 +289,7 @@ static esp_rom_spiflash_result_t IRAM_ATTR spi_flash_unlock(void)
 
 esp_err_t IRAM_ATTR spi_flash_erase_sector(size_t sec)
 {
-    const spi_flash_guard_funcs_t *guard = spi_flash_guard_get();
+    //const spi_flash_guard_funcs_t *guard = spi_flash_guard_get();
     CHECK_WRITE_ADDRESS(sec * SPI_FLASH_SEC_SIZE, SPI_FLASH_SEC_SIZE);
     return spi_flash_erase_range(sec * SPI_FLASH_SEC_SIZE, SPI_FLASH_SEC_SIZE);
 }

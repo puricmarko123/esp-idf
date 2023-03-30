@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "esp_attr.h"
 #include "soc/gpio_periph.h"
 
-const uint32_t GPIO_PIN_MUX_REG[SOC_GPIO_PIN_COUNT] = {
+const uint32_t DRAM_ATTR GPIO_PIN_MUX_REG[SOC_GPIO_PIN_COUNT] = {
     IO_MUX_GPIO0_REG,
     IO_MUX_GPIO1_REG,
     IO_MUX_GPIO2_REG,
@@ -64,7 +65,7 @@ const uint32_t GPIO_PIN_MUX_REG[SOC_GPIO_PIN_COUNT] = {
     IO_MUX_GPIO46_REG,
 };
 
-const uint32_t GPIO_HOLD_MASK[SOC_GPIO_PIN_COUNT] = {
+const uint32_t DRAM_ATTR GPIO_HOLD_MASK[SOC_GPIO_PIN_COUNT] = {
     0,
     0,
     0,

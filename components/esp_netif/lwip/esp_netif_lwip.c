@@ -2023,4 +2023,9 @@ esp_err_t esp_netif_remove_ip6_address(esp_netif_t *esp_netif, const esp_ip6_add
 
 #endif // CONFIG_LWIP_IPV6
 
+struct netif *esp_netif_get_lwip_netif(esp_netif_t *esp_netif)
+{
+    return esp_netif->lwip_netif;
+}
+
 #endif /* CONFIG_ESP_NETIF_TCPIP_LWIP */

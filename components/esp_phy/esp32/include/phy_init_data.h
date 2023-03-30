@@ -26,6 +26,9 @@
 #define PHY_SUPPORT_MULTIPLE_BIN_OFFSET 125
 #endif
 static const char phy_init_magic_pre[] = PHY_INIT_MAGIC;
+#ifndef CONFIG_ESP_PHY_MAX_TX_POWER
+#define CONFIG_ESP_PHY_MAX_TX_POWER 20
+#endif
 
 /**
  * @brief Structure containing default recommended PHY initialization parameters.

@@ -32,7 +32,7 @@ static const char *TAG = "vfs";
 #define LEN_PATH_PREFIX_IGNORED SIZE_MAX /* special length value for VFS which is never recognised by open() */
 #define FD_TABLE_ENTRY_UNUSED   (fd_table_t) { .permanent = false, .has_pending_close = false, .has_pending_select = false, .vfs_index = -1, .local_fd = -1 }
 
-typedef uint8_t local_fd_t;
+typedef uint16_t local_fd_t;
 _Static_assert((1 << (sizeof(local_fd_t)*8)) >= MAX_FDS, "file descriptor type too small");
 
 typedef int8_t vfs_index_t;
@@ -289,6 +289,18 @@ static inline int get_local_fd(const vfs_entry_t *vfs, int fd)
     }
 
     return local_fd;
+}
+
+int esp_vfs_translate_fd(int fd, void **pctx)
+{
+    const vfs_entry_t* vfs = get_vfs_for_fd(fd);
+    if (vfs == NULL) {
+        return -1;
+    }
+    if (pctx != NULL) {
+        *pctx = vfs->ctx;
+    }
+    return get_local_fd(vfs, fd);
 }
 
 static const char* translate_path(const vfs_entry_t* vfs, const char* src_path)

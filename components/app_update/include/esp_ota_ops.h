@@ -252,6 +252,7 @@ esp_err_t esp_ota_get_partition_description(const esp_partition_t *partition, es
  */
 uint8_t esp_ota_get_app_partition_count(void);
 
+#if 0
 /**
  * @brief This function is called to indicate that the running app is working well.
  *
@@ -312,6 +313,7 @@ esp_err_t esp_ota_erase_last_boot_app_partition(void);
  *        - False: The rollback is not possible.
  */
 bool esp_ota_check_rollback_is_possible(void);
+#endif
 
 #if SOC_EFUSE_SECURE_BOOT_KEY_DIGESTS > 1 && (CONFIG_SECURE_BOOT_V2_ENABLED || __DOXYGEN__)
 

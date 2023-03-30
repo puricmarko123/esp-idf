@@ -65,14 +65,12 @@ void IRAM_ATTR bootloader_flash_clock_config(const esp_image_header_t* pfhdr)
     esp_rom_spiflash_config_clk(spi_clk_div, 1);
 }
 
-void IRAM_ATTR bootloader_flash_gpio_config(const esp_image_header_t* pfhdr)
+void IRAM_ATTR bootloader_flash_gpio_config(const esp_image_header_t* pfhdr, uint32_t pkg_ver)
 {
     uint32_t drv = 2;
     if (pfhdr->spi_speed == ESP_IMAGE_SPI_SPEED_80M) {
         drv = 3;
     }
-
-    uint32_t pkg_ver = bootloader_common_get_chip_ver_pkg();
 
     if (pkg_ver == EFUSE_RD_CHIP_VER_PKG_ESP32D2WDQ5 ||
         pkg_ver == EFUSE_RD_CHIP_VER_PKG_ESP32PICOD2 ||
@@ -155,6 +153,14 @@ void IRAM_ATTR bootloader_flash_dummy_config(const esp_image_header_t* pfhdr)
 
     SET_PERI_REG_BITS(SPI_USER1_REG(0), SPI_USR_DUMMY_CYCLELEN_V, spi_cache_dummy + g_rom_spiflash_dummy_len_plus[0],
             SPI_USR_DUMMY_CYCLELEN_S);
+}
+
+void IRAM_ATTR bootloader_init_flash_configure(const esp_image_header_t* pfhdr, uint32_t pkg_ver)
+{
+    bootloader_flash_clock_config(pfhdr);
+    bootloader_flash_gpio_config(pfhdr, pkg_ver);
+    bootloader_flash_dummy_config(pfhdr);
+    bootloader_flash_cs_timing_config();
 }
 
 #define ESP32_D2WD_WP_GPIO 7 /* ESP32-D2WD & ESP32-PICO-D4 has this GPIO wired to WP pin of flash */

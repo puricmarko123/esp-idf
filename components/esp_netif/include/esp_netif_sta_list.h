@@ -29,6 +29,11 @@ typedef struct {
     esp_ip4_addr_t ip;  /**< Station assigned IP address */
 } esp_netif_sta_info_t;
 
+#if !CONFIG_ESP32_WIFI_ENABLED
+#define ESP_WIFI_MAX_CONN_NUM 0
+typedef void wifi_sta_list_t;
+#endif
+
 /**
  * @brief station list structure
  */

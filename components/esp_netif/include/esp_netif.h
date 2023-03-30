@@ -17,13 +17,15 @@
 
 #include <stdint.h>
 #include "sdkconfig.h"
-#include "esp_wifi_types.h"
 #include "esp_netif_ip_addr.h"
 #include "esp_netif_types.h"
 #include "esp_netif_defaults.h"
 
 #if CONFIG_ETH_ENABLED
 #include "esp_eth_netif_glue.h"
+#endif
+#if CONFIG_ESP32_WIFI_ENABLED
+#include "esp_wifi_types.h"
 #endif
 
 //
@@ -909,6 +911,9 @@ void esp_netif_netstack_buf_free(void *netstack_buf);
 /**
  * @}
  */
+
+struct netif;
+struct netif *esp_netif_get_lwip_netif(esp_netif_t *esp_netif);
 
 #ifdef __cplusplus
 }

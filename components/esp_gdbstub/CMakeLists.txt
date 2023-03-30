@@ -1,8 +1,7 @@
 idf_build_get_property(target IDF_TARGET)
 
 idf_component_register(SRCS "src/gdbstub.c" "src/packet.c"
-                       INCLUDE_DIRS "include"
-                       PRIV_INCLUDE_DIRS "private_include"
+                       INCLUDE_DIRS "include" "private_include"
                        LDFRAGMENTS "linker.lf"
                        REQUIRES "freertos"
                        PRIV_REQUIRES "soc" "esp_rom")

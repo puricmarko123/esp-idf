@@ -62,7 +62,6 @@
 
 #include <protoc-c/c_generator.h>
 
-#include <memory>
 #include <vector>
 #include <utility>
 
@@ -70,7 +69,7 @@
 #include <protoc-c/c_helpers.h>
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/io/zero_copy_stream.h>
-#include <protobuf-c/protobuf-c.pb.h>
+#include <google/protobuf/descriptor.pb.h>
 
 namespace google {
 namespace protobuf {
@@ -81,14 +80,14 @@ namespace c {
 //   "foo=bar,baz,qux=corge"
 // parses to the pairs:
 //   ("foo", "bar"), ("baz", ""), ("qux", "corge")
-void ParseOptions(const std::string& text, std::vector<std::pair<std::string, std::string> >* output) {
-  std::vector<std::string> parts;
+void ParseOptions(const string& text, vector<pair<string, string> >* output) {
+  vector<string> parts;
   SplitStringUsing(text, ",", &parts);
 
   for (unsigned i = 0; i < parts.size(); i++) {
-    std::string::size_type equals_pos = parts[i].find_first_of('=');
-    std::pair<std::string, std::string> value;
-    if (equals_pos == std::string::npos) {
+    string::size_type equals_pos = parts[i].find_first_of('=');
+    pair<string, string> value;
+    if (equals_pos == string::npos) {
       value.first = parts[i];
       value.second = "";
     } else {
@@ -103,13 +102,10 @@ CGenerator::CGenerator() {}
 CGenerator::~CGenerator() {}
 
 bool CGenerator::Generate(const FileDescriptor* file,
-                            const std::string& parameter,
+                            const string& parameter,
                             OutputDirectory* output_directory,
-                            std::string* error) const {
-  if (file->options().GetExtension(pb_c_file).no_generate())
-    return true;
-
-  std::vector<std::pair<std::string, std::string> > options;
+                            string* error) const {
+  vector<pair<string, string> > options;
   ParseOptions(parameter, &options);
 
   // -----------------------------------------------------------------
@@ -132,7 +128,7 @@ bool CGenerator::Generate(const FileDescriptor* file,
   //   }
   // FOO_EXPORT is a macro which should expand to __declspec(dllexport) or
   // __declspec(dllimport) depending on what is being compiled.
-  std::string dllexport_decl;
+  string dllexport_decl;
 
   for (unsigned i = 0; i < options.size(); i++) {
     if (options[i].first == "dllexport_decl") {
@@ -146,14 +142,14 @@ bool CGenerator::Generate(const FileDescriptor* file,
   // -----------------------------------------------------------------
 
 
-  std::string basename = StripProto(file->name());
+  string basename = StripProto(file->name());
   basename.append(".pb-c");
 
   FileGenerator file_generator(file, dllexport_decl);
 
   // Generate header.
   {
-    std::unique_ptr<io::ZeroCopyOutputStream> output(
+    scoped_ptr<io::ZeroCopyOutputStream> output(
       output_directory->Open(basename + ".h"));
     io::Printer printer(output.get(), '$');
     file_generator.GenerateHeader(&printer);
@@ -161,7 +157,7 @@ bool CGenerator::Generate(const FileDescriptor* file,
 
   // Generate cc file.
   {
-    std::unique_ptr<io::ZeroCopyOutputStream> output(
+    scoped_ptr<io::ZeroCopyOutputStream> output(
       output_directory->Open(basename + ".c"));
     io::Printer printer(output.get(), '$');
     file_generator.GenerateSource(&printer);

@@ -63,7 +63,6 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_C_FIELD_H__
 #define GOOGLE_PROTOBUF_COMPILER_C_FIELD_H__
 
-#include <memory>
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/descriptor.h>
 
@@ -91,7 +90,7 @@ class FieldGenerator {
 
   virtual void GenerateDefaultValueDeclarations(io::Printer* printer) const { }
   virtual void GenerateDefaultValueImplementations(io::Printer* printer) const { }
-  virtual std::string GetDefaultValue() const = 0;
+  virtual string GetDefaultValue() const = 0;
 
   // Generate members to initialize this field from a static initializer
   virtual void GenerateStaticInit(io::Printer* printer) const = 0;
@@ -100,8 +99,8 @@ class FieldGenerator {
  protected:
   void GenerateDescriptorInitializerGeneric(io::Printer* printer,
                                             bool optional_uses_has,
-                                            const std::string &type_macro,
-                                            const std::string &descriptor_addr) const;
+                                            const string &type_macro,
+                                            const string &descriptor_addr) const;
   const FieldDescriptor *descriptor_;
 
  private:
@@ -118,7 +117,7 @@ class FieldGeneratorMap {
 
  private:
   const Descriptor* descriptor_;
-  std::unique_ptr<std::unique_ptr<FieldGenerator>[]> field_generators_;
+  scoped_array<scoped_ptr<FieldGenerator> > field_generators_;
 
   static FieldGenerator* MakeGenerator(const FieldDescriptor* field);
 

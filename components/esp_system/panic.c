@@ -23,6 +23,7 @@
 
 #include "soc/cpu.h"
 #include "soc/rtc.h"
+#include "soc/rtc_wdt.h"
 #include "hal/timer_hal.h"
 #include "hal/cpu_hal.h"
 #include "hal/wdt_types.h"
@@ -293,9 +294,11 @@ void esp_panic_handler(panic_info_t *info)
     // start panic WDT to restart system if we hang in this handler
     if (!wdt_hal_is_enabled(&rtc_wdt_ctx)) {
         wdt_hal_init(&rtc_wdt_ctx, WDT_RWDT, 0, false);
-        uint32_t stage_timeout_ticks = (uint32_t)(7000ULL * rtc_clk_slow_freq_get_hz() / 1000ULL);
+        uint32_t stage_timeout_ticks = (uint32_t)(70000ULL * rtc_clk_slow_freq_get_hz() / 1000ULL);
         wdt_hal_write_protect_disable(&rtc_wdt_ctx);
         wdt_hal_config_stage(&rtc_wdt_ctx, WDT_STAGE0, stage_timeout_ticks, WDT_STAGE_ACTION_RESET_SYSTEM);
+        // For some reason WDT_STAGE_ACTION_RESET_SYSTEM doesn't reset the system and hangs it instead.
+        wdt_hal_config_stage(&rtc_wdt_ctx, WDT_STAGE1, 10, WDT_STAGE_ACTION_RESET_RTC);
         // 64KB of core dump data (stacks of about 30 tasks) will produce ~85KB base64 data.
         // @ 115200 UART speed it will take more than 6 sec to print them out.
         wdt_hal_enable(&rtc_wdt_ctx);

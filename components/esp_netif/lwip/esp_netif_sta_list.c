@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#if CONFIG_ESP32_WIFI_ENABLED && CONFIG_ESP_NETIF_TCPIP_LWIP
+
 #include <string.h>
 #include "esp_netif.h"
 #include "esp_netif_sta_list.h"
 #include "dhcpserver/dhcpserver.h"
 #include "esp_log.h"
-
-#if CONFIG_ESP_NETIF_TCPIP_LWIP
 
 static const char *TAG = "esp_netif_sta_list";
 
@@ -40,4 +40,4 @@ esp_err_t esp_netif_get_sta_list(const wifi_sta_list_t *wifi_sta_list, esp_netif
     return ESP_OK;
 }
 
-#endif // CONFIG_ESP_NETIF_TCPIP_LWIP
+#endif // CONFIG_ESP32_WIFI_ENABLED && CONFIG_ESP_NETIF_TCPIP_LWIP

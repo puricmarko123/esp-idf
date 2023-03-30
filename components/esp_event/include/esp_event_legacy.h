@@ -18,8 +18,10 @@
 #include <stdbool.h>
 
 #include "esp_err.h"
-#include "esp_wifi_types.h"
 #include "esp_netif.h"
+#if CONFIG_ESP32_WIFI_ENABLED
+#include "esp_wifi_types.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,7 +69,7 @@ typedef enum {
 #define SYSTEM_EVENT_AP_STA_GOT_IP6 SYSTEM_EVENT_GOT_IP6
 #endif
 
-
+#if CONFIG_ESP32_WIFI_ENABLED
 /** Argument structure of SYSTEM_EVENT_STA_WPS_ER_FAILED event */
 typedef wifi_event_sta_wps_fail_reason_t system_event_sta_wps_fail_reason_t;
 
@@ -103,6 +105,7 @@ typedef wifi_event_ftm_report_t system_event_ftm_report_t;
 
 /** Argument structure of  event */
 typedef ip_event_ap_staipassigned_t system_event_ap_staipassigned_t;
+#endif
 
 /** Argument structure of  event */
 typedef ip_event_got_ip_t system_event_sta_got_ip_t;
@@ -112,11 +115,11 @@ typedef ip_event_got_ip6_t system_event_got_ip6_t;
 
 /** Union of all possible system_event argument structures */
 typedef union {
+#if CONFIG_ESP32_WIFI_ENABLED
     system_event_sta_connected_t               connected;          /*!< ESP32 station connected to AP */
     system_event_sta_disconnected_t            disconnected;       /*!< ESP32 station disconnected to AP */
     system_event_sta_scan_done_t               scan_done;          /*!< ESP32 station scan (APs) done */
     system_event_sta_authmode_change_t         auth_change;        /*!< the auth mode of AP ESP32 station connected to changed */
-    system_event_sta_got_ip_t                  got_ip;             /*!< ESP32 station got IP, first time got IP or when IP is changed */
     system_event_sta_wps_er_pin_t              sta_er_pin;         /*!< ESP32 station WPS enrollee mode PIN code received */
     system_event_sta_wps_fail_reason_t         sta_er_fail_reason; /*!< ESP32 station WPS enrollee mode failed reason code received */
     system_event_sta_wps_er_success_t          sta_er_success;     /*!< ESP32 station WPS enrollee success */
@@ -125,6 +128,8 @@ typedef union {
     system_event_ap_probe_req_rx_t             ap_probereqrecved;  /*!< ESP32 soft-AP receive probe request packet */
     system_event_ftm_report_t                  ftm_report;         /*!< Report of FTM procedure */
     system_event_ap_staipassigned_t            ap_staipassigned;   /**< ESP32 soft-AP assign an IP to the station*/
+#endif  // CONFIG_ESP32_WIFI_ENABLED
+    system_event_sta_got_ip_t                  got_ip;             /*!< ESP32 station got IP, first time got IP or when IP is changed */
     system_event_got_ip6_t                     got_ip6;            /*!< ESP32 station　or ap or ethernet ipv6 addr state change to preferred */
 } system_event_info_t;
 

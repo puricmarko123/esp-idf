@@ -5,9 +5,11 @@
  */
 
 #include "esp_netif.h"
-#include "esp_wifi_default.h"
 #if CONFIG_ETH_ENABLED
 #include "esp_eth.h"
+#endif
+#if CONFIG_ESP32_WIFI_ENABLED
+#include "esp_wifi_types.h"
 #endif
 
 //

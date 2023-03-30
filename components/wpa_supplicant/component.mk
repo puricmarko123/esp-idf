@@ -50,6 +50,11 @@ else
     src/crypto/crypto_mbedtls-ec.o
 endif
 
+CONFIG_MBEDTLS_RC4_DISABLED ?= y
+CONFIG_MBEDTLS_DES_C ?= n
+CONFIG_MBEDTLS_CMAC_C ?= y
+CONFIG_MBEDTLS_NIST_KW_C ?= y
+
 ifneq ($(CONFIG_MBEDTLS_RC4_DISABLED), y)
     COMPONENT_OBJEXCLUDE += src/crypto/rc4.o
 endif

@@ -29,7 +29,6 @@
 # Copyright (c) 2020      Gulliver <gulliver@traumkristalle.net>
 # Copyright (c) 2020      Thomas Beutlich <tc@tbeu.de>
 # Copyright (c) 2021      Alex Richardson <Alexander.Richardson@cl.cam.ac.uk>
-# Copyright (c) 2022      Johnny Jazeix <jazeix@gmail.com>
 # Unlike most of Expat,
 # this file is copyrighted under the BSD-license for buildsystem files of KDE.
 
@@ -65,7 +64,7 @@ endif()
 
 project(expat
     VERSION
-        2.4.8
+        2.4.3
     LANGUAGES
         C
 )
@@ -382,7 +381,7 @@ endforeach()
 #
 # C library
 #
-set(_EXPAT_C_SOURCES
+set(expat_SRCS
     lib/xmlparse.c
     lib/xmlrole.c
     lib/xmltok.c
@@ -394,18 +393,13 @@ set(_EXPAT_C_SOURCES
 if(EXPAT_SHARED_LIBS)
     set(_SHARED SHARED)
     if(MSVC)
-        set(_EXPAT_EXTRA_SOURCES ${_EXPAT_EXTRA_SOURCES} lib/libexpat.def)
-    endif()
-    if(WIN32)
-        # Add DLL version
-        string(REPLACE "." "," _EXPAT_DLL_VERSION ${PROJECT_VERSION}.0)
-        set(_EXPAT_EXTRA_SOURCES ${_EXPAT_EXTRA_SOURCES} win32/version.rc)
+        set(expat_SRCS ${expat_SRCS} lib/libexpat.def)
     endif()
 else()
     set(_SHARED STATIC)
 endif()
 
-add_library(expat ${_SHARED} ${_EXPAT_C_SOURCES} ${_EXPAT_EXTRA_SOURCES})
+add_library(expat ${_SHARED} ${expat_SRCS})
 if(_EXPAT_LIBM_FOUND)
     target_link_libraries(expat m)
 endif()
@@ -414,7 +408,7 @@ if(EXPAT_WITH_LIBBSD)
 endif()
 
 set(LIBCURRENT 9)   # sync
-set(LIBREVISION 8)  # with
+set(LIBREVISION 3)  # with
 set(LIBAGE 8)       # configure.ac!
 math(EXPR LIBCURRENT_MINUS_AGE "${LIBCURRENT} - ${LIBAGE}")
 
@@ -422,30 +416,15 @@ if(NOT WIN32)
     set_property(TARGET expat PROPERTY VERSION ${LIBCURRENT_MINUS_AGE}.${LIBAGE}.${LIBREVISION})
     set_property(TARGET expat PROPERTY SOVERSION ${LIBCURRENT_MINUS_AGE})
     set_property(TARGET expat PROPERTY NO_SONAME ${NO_SONAME})
-
-    if(APPLE)
-        if(NOT CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
-            message(FATAL_ERROR "Expat requires CMake >=3.17 on platform \"APPLE\".")
-        endif()
-
-        # NOTE: This intends to talk CMake into compatiblity with GNU Libtool
-        math(EXPR _EXPAT_MACHO_COMPATIBILITY_VERSION "${LIBCURRENT} + 1")
-        set(_EXPAT_MACHO_CURRENT_VERSION "${_EXPAT_MACHO_COMPATIBILITY_VERSION}.${LIBREVISION}")
-        set_property(TARGET expat PROPERTY MACHO_COMPATIBILITY_VERSION ${_EXPAT_MACHO_COMPATIBILITY_VERSION})
-        set_property(TARGET expat PROPERTY MACHO_CURRENT_VERSION ${_EXPAT_MACHO_CURRENT_VERSION})
-    endif()
 endif()
 if(WIN32 AND NOT MINGW)
     # NOTE: This avoids a name collision with Expat.dll of Perl's XML::Parser::Expat
     #       on Windows by resorting to filename libexpat.dll since Expat 1.95.3.
     #       Everything but MSVC is already adding prefix "lib", automatically.
     # NOTE: "set_property(TARGET expat PROPERTY PREFIX lib)" would only affect *.dll
-    #       files but not *.lib files, so we have to rely on property OUTPUT_NAME, instead.
+    #       files but not *.lib files, so we have to rely on propert OUTPUT_NAME, instead.
     #       Property CMAKE_*_POSTFIX still applies.
-    set(_EXPAT_OUTPUT_NAME libexpat)
-    set_property(TARGET expat PROPERTY OUTPUT_NAME ${_EXPAT_OUTPUT_NAME})
-else()
-    set(_EXPAT_OUTPUT_NAME expat)
+    set_property(TARGET expat PROPERTY OUTPUT_NAME libexpat)
 endif()
 
 target_include_directories(expat
@@ -455,12 +434,8 @@ target_include_directories(expat
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-if(WIN32)
-    if(EXPAT_SHARED_LIBS)
-        target_compile_definitions(expat PRIVATE VER_FILEVERSION=${_EXPAT_DLL_VERSION})
-    else()
-        target_compile_definitions(expat PUBLIC -DXML_STATIC)
-    endif()
+if(NOT EXPAT_SHARED_LIBS AND WIN32)
+    target_compile_definitions(expat PUBLIC -DXML_STATIC)
 endif()
 
 expat_install(TARGETS expat EXPORT expat
@@ -497,7 +472,6 @@ if(EXPAT_BUILD_PKGCONFIG)
         string(TOLOWER "${_build_type}" _build_type_lower)
         string(TOUPPER "${_build_type}" _build_type_upper)
         set_property(TARGET expat PROPERTY "pkgconfig_${_build_type_lower}_name" "expat${CMAKE_${_build_type_upper}_POSTFIX}")
-        set_property(TARGET expat PROPERTY "pkgconfig_${_build_type_lower}_output_name" "${_EXPAT_OUTPUT_NAME}${CMAKE_${_build_type_upper}_POSTFIX}")
         if(_EXPAT_LIBM_FOUND)
             set_property(TARGET expat PROPERTY "pkgconfig_libm" "-lm")
         else()
@@ -576,7 +550,7 @@ if(EXPAT_BUILD_TESTS)
         tests/memcheck.c
         tests/minicheck.c
         tests/structdata.c
-        ${_EXPAT_C_SOURCES}
+        ${expat_SRCS}
     )
 
     if(NOT MSVC)
@@ -645,7 +619,7 @@ if(EXPAT_BUILD_FUZZERS)
     set(encoding_types UTF-16 UTF-8 ISO-8859-1 US-ASCII UTF-16BE UTF-16LE)
     set(fuzz_targets xml_parse_fuzzer xml_parsebuffer_fuzzer)
 
-    add_library(fuzzpat STATIC ${_EXPAT_C_SOURCES})
+    add_library(fuzzpat STATIC ${expat_SRCS})
     if(NOT EXPAT_OSSFUZZ_BUILD)
         target_compile_options(fuzzpat PRIVATE -fsanitize=fuzzer-no-link)
     endif()

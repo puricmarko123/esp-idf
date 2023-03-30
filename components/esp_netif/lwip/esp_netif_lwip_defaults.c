@@ -18,8 +18,12 @@
 
 #ifdef CONFIG_ESP_NETIF_TCPIP_LWIP
 
+#if CONFIG_ESP32_WIFI_ENABLED
 #include "netif/wlanif.h"
+#endif
+#if CONFIG_ETH_ENABLED
 #include "netif/ethernetif.h"
+#endif
 #if CONFIG_OPENTHREAD_ENABLED
 #include "netif/openthreadif.h"
 #endif
@@ -29,12 +33,16 @@
 //  of basic types of interfaces using lwip network stack
 //
 
+#if CONFIG_ETH_ENABLED
 static const struct esp_netif_netstack_config s_eth_netif_config = {
         .lwip = {
             .init_fn = ethernetif_init,
             .input_fn = ethernetif_input
         }
 };
+const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_eth      = &s_eth_netif_config;
+#endif
+#if CONFIG_ESP32_WIFI_ENABLED
 static const struct esp_netif_netstack_config s_wifi_netif_config_ap = {
         .lwip = {
             .init_fn = wlanif_init_ap,
@@ -48,7 +56,9 @@ static const struct esp_netif_netstack_config s_wifi_netif_config_sta = {
                 .input_fn = wlanif_input
         }
 };
-
+const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_wifi_sta = &s_wifi_netif_config_sta;
+const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_wifi_ap  = &s_wifi_netif_config_ap;
+#endif
 static const struct esp_netif_netstack_config s_netif_config_ppp = {
         .lwip_ppp = {
                 .input_fn = esp_netif_lwip_ppp_input,
@@ -58,10 +68,6 @@ static const struct esp_netif_netstack_config s_netif_config_ppp = {
                 }
         }
 };
-
-const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_eth      = &s_eth_netif_config;
-const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_wifi_sta = &s_wifi_netif_config_sta;
-const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_wifi_ap  = &s_wifi_netif_config_ap;
 const esp_netif_netstack_config_t *_g_esp_netif_netstack_default_ppp      = &s_netif_config_ppp;
 
 #if CONFIG_OPENTHREAD_ENABLED

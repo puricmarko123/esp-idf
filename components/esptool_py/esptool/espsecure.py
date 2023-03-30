@@ -164,7 +164,7 @@ def generate_signing_key(args):
         raise esptool.FatalError("ERROR: Key file %s already exists" % args.keyfile)
     if args.version == "1":
         if hasattr(args, "scheme"):
-            if args.scheme != "ecdsa256" and args.scheme is not None:
+            if args.scheme != "ecdsa256":
                 raise esptool.FatalError("ERROR: V1 only supports ECDSA256")
         """ Generate an ECDSA signing key for signing secure boot images (post-bootloader) """
         _generate_ecdsa_signing_key(ecdsa.NIST256p, args.keyfile)
@@ -264,14 +264,13 @@ def _get_sbv2_rsa_primitives(public_key):
     return primitives
 
 
-def _microecc_format(a, b, curve_len):
+def _microecc_format(a, b):
     """
     Given two numbers (curve coordinates or (r,s) signature), write them out as a little-endian byte sequence suitable for micro-ecc
     "native little endian" mode
     """
-    byte_len = int(curve_len / 8)
-    ab = int_to_bytes(a, byte_len)[::-1] + int_to_bytes(b, byte_len)[::-1]
-    assert len(ab) == 48 or len(ab) == 64
+    ab = int_to_bytes(a)[::-1] + int_to_bytes(b)[::-1]
+    assert len(ab) == 48 or len(ab) == 64, "a, b may need to be byte padded to either be 48 or 64 bytes in length"
     return ab
 
 
@@ -396,23 +395,17 @@ def sign_secure_boot_v2(args):
                                          ec.ECDSA(utils.Prehashed(hashes.SHA256())))
 
             numbers = private_key.public_key().public_numbers()
-            if isinstance(private_key.curve, ec.SECP192R1):
-                curve_len = 192
-                curve_id = CURVE_ID_P192
-            else:
-                curve_len = 256
-                curve_id = CURVE_ID_P256
-            pubkey_point = _microecc_format(numbers.x, numbers.y, curve_len)
+            pubkey_point = _microecc_format(numbers.x, numbers.y)
 
             r, s = utils.decode_dss_signature(signature)
-            signature_rs = _microecc_format(r, s, curve_len)
+            signature_rs = _microecc_format(r, s)
 
             # block is padded out to the much larger size of the RSA version of this structure
             signature_block  = struct.pack("<BBxx32sB64s64s1031x",
                                            SIG_BLOCK_MAGIC,
                                            SIG_BLOCK_VERSION_ECDSA,
                                            digest,
-                                           curve_id,
+                                           CURVE_ID_P192 if isinstance(private_key.curve, ec.SECP192R1) else CURVE_ID_P256,
                                            pubkey_point,
                                            signature_rs)
 
@@ -484,7 +477,7 @@ def validate_signature_block(image_content, sig_blk_num):
 
     offset = -SECTOR_SIZE + sig_blk_num * SIG_BLOCK_SIZE
     sig_blk = image_content[offset: offset + SIG_BLOCK_SIZE]
-    assert len(sig_blk) == SIG_BLOCK_SIZE
+    assert(len(sig_blk) == SIG_BLOCK_SIZE)
 
     # note: in case of ECDSA key, the exact fields in the middle are wrong (but unused here)
     magic, version, _, _, _, _, _, _, blk_crc = struct.unpack("<BBxx32s384sI384sI384sI16x",
@@ -664,16 +657,10 @@ def _digest_sbv2_public_key(keyfile):
                                     rsa_primitives.m & 0xFFFFFFFF)
     else:  # ECC public key
         numbers = public_key.public_numbers()
-        if isinstance(public_key.curve, ec.SECP192R1):
-            curve_len = 192
-            curve_id = CURVE_ID_P192
-        else:
-            curve_len = 256
-            curve_id = CURVE_ID_P256
-        pubkey_point = _microecc_format(numbers.x, numbers.y, curve_len)
+        pubkey_point = _microecc_format(numbers.x, numbers.y)
 
         binary_format = struct.pack("<B64s",
-                                    curve_id,
+                                    CURVE_ID_P192 if isinstance(public_key.curve, ec.SECP192R1) else CURVE_ID_P256,
                                     pubkey_point)
 
     return hashlib.sha256(binary_format).digest()

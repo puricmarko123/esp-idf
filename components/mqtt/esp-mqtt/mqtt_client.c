@@ -1006,14 +1006,13 @@ post_data_event:
         msg_topic = NULL;
         msg_topic_len = 0;
         msg_data_offset += msg_data_len;
-        int ret = esp_transport_read(client->transport, (char *)client->mqtt_state.in_buffer,
+        msg_data_len = esp_transport_read(client-> transport, (char *)client->mqtt_state.in_buffer,
                                           msg_total_len - msg_read_len > buf_len ? buf_len : msg_total_len - msg_read_len,
                                           client->config->network_timeout_ms);
-        if (ret <= 0) {
-            ESP_LOGE(TAG, "Read error or timeout: len_read=%d, errno=%d", ret, errno);
+        if (msg_data_len <= 0) {
+            ESP_LOGE(TAG, "Read error or timeout: len_read=%zu, errno=%d", msg_data_len, errno);
             return ESP_FAIL;
         }
-        msg_data_len = ret;
         msg_read_len += msg_data_len;
         goto post_data_event;
     }
@@ -1900,16 +1899,6 @@ int esp_mqtt_client_enqueue(esp_mqtt_client_handle_t client, const char *topic, 
         ESP_LOGE(TAG, "Client was not initialized");
         return -1;
     }
-
-    /* Acceptable publish messages:
-        data == NULL, len == 0: publish null message
-        data valid,   len == 0: publish all data, payload len is determined from string length
-        data valid,   len >  0: publish data with defined length
-     */
-    if (len <= 0 && data != NULL) {
-        len = strlen(data);
-    }
-
     MQTT_API_LOCK(client);
     int ret = mqtt_client_enqueue_priv(client, topic, data, len, qos, retain, store);
     MQTT_API_UNLOCK(client);

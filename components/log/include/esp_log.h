@@ -40,7 +40,7 @@ typedef enum {
     ESP_LOG_VERBOSE     /*!< Bigger chunks of debugging information, or frequent messages which can potentially flood the output. */
 } esp_log_level_t;
 
-typedef int (*vprintf_like_t)(const char *, va_list);
+typedef int (*vprintf_like_t)(esp_log_level_t level, const char *, va_list);
 
 /**
  * @brief Default log level
@@ -91,7 +91,7 @@ esp_log_level_t esp_log_level_get(const char* tag);
  * @note Please note that function callback here must be re-entrant as it can be
  * invoked in parallel from multiple thread context.
  *
- * @param func new Function used for output. Must have same signature as vprintf.
+ * @param func new Function used for output.
  *
  * @return func old Function used for output.
  */

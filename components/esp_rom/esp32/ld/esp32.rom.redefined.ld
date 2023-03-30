@@ -25,10 +25,12 @@ PROVIDE ( hmac_sha1 = 0x40060acc );
 PROVIDE ( hmac_sha1_vector = 0x400609e4 );
 PROVIDE ( hmac_sha256 = 0x40060d58 );
 PROVIDE ( hmac_sha256_vector = 0x40060c84 );
+/*
 PROVIDE ( MD5Final = 0x4005db1c );
 PROVIDE ( MD5Init = 0x4005da7c );
 PROVIDE ( MD5Update = 0x4005da9c );
 PROVIDE ( md5_vector = 0x4005db80 );
+*/
 PROVIDE ( pbkdf2_sha1 = 0x40060ba4 );
 PROVIDE ( rc4_skip = 0x40060928 );
 PROVIDE ( sha1_prf = 0x40060ae8 );

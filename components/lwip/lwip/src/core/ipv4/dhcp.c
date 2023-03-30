@@ -157,7 +157,7 @@ enum dhcp_option_idx {
   DHCP_OPTION_IDX_DNS_SERVER,
   DHCP_OPTION_IDX_DNS_SERVER_LAST = DHCP_OPTION_IDX_DNS_SERVER + LWIP_DHCP_PROVIDE_DNS_SERVERS - 1,
 #endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
-#if LWIP_DHCP_GET_NTP_SRV && LWIP_DHCP_MAX_NTP_SERVERS
+#if LWIP_DHCP_GET_NTP_SRV
   DHCP_OPTION_IDX_NTP_SERVER,
   DHCP_OPTION_IDX_NTP_SERVER_LAST = DHCP_OPTION_IDX_NTP_SERVER + LWIP_DHCP_MAX_NTP_SERVERS - 1,
 #endif /* LWIP_DHCP_GET_NTP_SRV */
@@ -364,9 +364,7 @@ dhcp_check(struct netif *netif)
 static void
 dhcp_handle_offer(struct netif *netif, struct dhcp_msg *msg_in)
 {
-#if ESP_DHCP && !ESP_DHCP_DISABLE_VENDOR_CLASS_IDENTIFIER
   u8_t n;
-#endif
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_offer(netif=%p) %c%c%"U16_F"\n",
@@ -695,7 +693,7 @@ dhcp_handle_ack(struct netif *netif, struct dhcp_msg *msg_in)
 #if LWIP_DHCP_PROVIDE_DNS_SERVERS || LWIP_DHCP_GET_NTP_SRV || !ESP_DHCP_DISABLE_VENDOR_CLASS_IDENTIFIER
   u8_t n;
 #endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS || LWIP_DHCP_GET_NTP_SRV || !ESP_DHCP_DISABLE_VENDOR_CLASS_IDENTIFIER */
-#if LWIP_DHCP_GET_NTP_SRV && LWIP_DHCP_MAX_NTP_SERVERS
+#if LWIP_DHCP_GET_NTP_SRV
   ip4_addr_t ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
 #endif
 
@@ -768,15 +766,12 @@ dhcp_handle_ack(struct netif *netif, struct dhcp_msg *msg_in)
     ip4_addr_set_u32(&dhcp->offered_gw_addr, lwip_htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_ROUTER)));
   }
 
-#if LWIP_DHCP_GET_NTP_SRV && LWIP_DHCP_MAX_NTP_SERVERS
+#if LWIP_DHCP_GET_NTP_SRV
   /* NTP servers */
   for (n = 0; (n < LWIP_DHCP_MAX_NTP_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_NTP_SERVER + n); n++) {
     ip4_addr_set_u32(&ntp_server_addrs[n], lwip_htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_NTP_SERVER + n)));
   }
-  ip4_addr_set_zero(&dhcp->offered_ntp_addr);
-  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_NTP_SERVER)) {
-    ip4_addr_set_u32(&dhcp->offered_ntp_addr, lwip_htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_NTP_SERVER)));
-  }
+  dhcp_set_ntp_servers(n, ntp_server_addrs);
 #endif /* LWIP_DHCP_GET_NTP_SRV */
 
 #if LWIP_DHCP_PROVIDE_DNS_SERVERS
@@ -792,10 +787,6 @@ dhcp_handle_ack(struct netif *netif, struct dhcp_msg *msg_in)
     dns_setserver(n, &dns_addr);
   }
 #endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
-  ip4_addr_set_zero(&dhcp->offered_dns_addr);
-  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER)) {
-    ip4_addr_set_u32(&dhcp->offered_dns_addr, lwip_htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER)));
-  }
 }
 
 /**
@@ -1997,7 +1988,7 @@ again:
         LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_LEASE_TIME;
         break;
-#if LWIP_DHCP_GET_NTP_SRV && LWIP_DHCP_MAX_NTP_SERVERS
+#if LWIP_DHCP_GET_NTP_SRV
       case (DHCP_OPTION_NTP):
         /* special case: there might be more than one server */
         LWIP_ERROR("len %% 4 == 0", len % 4 == 0, return ERR_VAL;);

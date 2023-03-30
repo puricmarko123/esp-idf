@@ -234,16 +234,9 @@ static void print_flash_info(const esp_image_header_t *bootloader_hdr)
     ESP_LOGI(TAG, "SPI Flash Size : %s", str);
 }
 
-static void IRAM_ATTR bootloader_init_flash_configure(void)
-{
-    bootloader_flash_gpio_config(&bootloader_image_hdr);
-    bootloader_flash_dummy_config(&bootloader_image_hdr);
-    bootloader_flash_cs_timing_config();
-}
-
 static esp_err_t bootloader_init_spi_flash(void)
 {
-    bootloader_init_flash_configure();
+    bootloader_init_flash_configure(&bootloader_image_hdr, bootloader_common_get_chip_ver_pkg());
 #ifndef CONFIG_SPI_FLASH_ROM_DRIVER_PATCH
     const uint32_t spiconfig = esp_rom_efuse_get_flash_gpio_info();
     if (spiconfig != ESP_ROM_EFUSE_FLASH_DEFAULT_SPI && spiconfig != ESP_ROM_EFUSE_FLASH_DEFAULT_HSPI) {

@@ -61,6 +61,7 @@
 #endif
 
 #include "esp_private/spi_flash_os.h"
+#include "bootloader_common.h"
 #include "bootloader_flash_config.h"
 #include "bootloader_flash.h"
 #include "esp_private/crosscore_int.h"
@@ -596,15 +597,10 @@ void IRAM_ATTR call_start_cpu0(void)
     memcpy(&fhdr, (void *) SOC_DROM_LOW, sizeof(fhdr));
 #endif // CONFIG_APP_BUILD_TYPE_ELF_RAM
 
-#if CONFIG_IDF_TARGET_ESP32
-#if !CONFIG_SPIRAM_BOOT_INIT
+#if CONFIG_IDF_TARGET_ESP32 && !CONFIG_SPIRAM_BOOT_INIT
     // If psram is uninitialized, we need to improve some flash configuration.
-    bootloader_flash_clock_config(&fhdr);
-    bootloader_flash_gpio_config(&fhdr);
-    bootloader_flash_dummy_config(&fhdr);
-    bootloader_flash_cs_timing_config();
-#endif //!CONFIG_SPIRAM_BOOT_INIT
-#endif //CONFIG_IDF_TARGET_ESP32
+    bootloader_init_flash_configure(&fhdr, bootloader_common_get_chip_ver_pkg());
+#endif // CONFIG_IDF_TARGET_ESP32 && !CONFIG_SPIRAM_BOOT_INIT
 
 #if CONFIG_SPI_FLASH_SIZE_OVERRIDE
     int app_flash_size = esp_image_get_flash_size(fhdr.spi_size);

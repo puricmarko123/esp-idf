@@ -35,17 +35,19 @@ static const char* TAG = "boot_comm";
 
 uint32_t bootloader_common_ota_select_crc(const esp_ota_select_entry_t *s)
 {
-    return esp_rom_crc32_le(UINT32_MAX, (uint8_t*)&s->ota_seq, 4);
+    esp_ota_select_entry_t tmp = *s;
+    tmp.crc = 0;
+    return esp_rom_crc32_le(UINT32_MAX, (uint8_t *) &tmp, sizeof(tmp));
 }
 
 bool bootloader_common_ota_select_invalid(const esp_ota_select_entry_t *s)
 {
-    return s->ota_seq == UINT32_MAX || s->ota_state == ESP_OTA_IMG_INVALID || s->ota_state == ESP_OTA_IMG_ABORTED;
+    return !bootloader_common_ota_select_valid(s);
 }
 
 bool bootloader_common_ota_select_valid(const esp_ota_select_entry_t *s)
 {
-    return bootloader_common_ota_select_invalid(s) == false && s->crc == bootloader_common_ota_select_crc(s);
+    return s->seq != UINT32_MAX && s->crc == bootloader_common_ota_select_crc(s);
 }
 
 int bootloader_common_get_active_otadata(esp_ota_select_entry_t *two_otadata)
@@ -91,22 +93,20 @@ int bootloader_common_select_otadata(const esp_ota_select_entry_t *two_otadata, 
         return -1;
     }
     int active_otadata = -1;
-    if (valid_two_otadata[0] && valid_two_otadata[1]) {
-        uint32_t condition = (max == true) ? MAX(two_otadata[0].ota_seq, two_otadata[1].ota_seq) : MIN(two_otadata[0].ota_seq, two_otadata[1].ota_seq);
-        if (condition == two_otadata[0].ota_seq) {
-            active_otadata = 0;
+    const esp_ota_select_entry_t *s0 = &two_otadata[0];
+    const esp_ota_select_entry_t *s1 = &two_otadata[1];
+    const bool s0_valid = valid_two_otadata[0];
+    const bool s1_valid = valid_two_otadata[1];
+    if (s0_valid && s1_valid) {
+        if (max) {
+            active_otadata = (s0->seq > s1->seq ? 0 : 1);
         } else {
-            active_otadata = 1;
+            active_otadata = (s0->seq < s1->seq ? 0 : 1);
         }
-        ESP_LOGD(TAG, "Both OTA copies are valid");
-    } else {
-        for (int i = 0; i < 2; ++i) {
-            if (valid_two_otadata[i]) {
-                active_otadata = i;
-                ESP_LOGD(TAG, "Only otadata[%d] is valid", i);
-                break;
-            }
-        }
+    } else if (s0_valid) {
+        active_otadata = 0;
+    } else if (s1_valid) {
+        active_otadata = 1;
     }
     return active_otadata;
 }

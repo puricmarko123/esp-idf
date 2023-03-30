@@ -23,11 +23,13 @@
 #include "freertos/portmacro.h"
 #include "phy.h"
 #include "phy_init_data.h"
-#include "esp_coexist_internal.h"
 #include "driver/periph_ctrl.h"
-#include "esp_private/wifi.h"
 #include "esp_rom_crc.h"
 #include "esp_rom_sys.h"
+#if CONFIG_ESP32_WIFI_ENABLED
+#include "esp_coexist_internal.h"
+#include "esp_private/wifi.h"
+#endif
 
 #include "soc/rtc_cntl_reg.h"
 #if CONFIG_IDF_TARGET_ESP32C3
@@ -36,7 +38,7 @@
 #include "soc/syscon_reg.h"
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32
+#if CONFIG_ESP32_WIFI_ENABLED && CONFIG_IDF_TARGET_ESP32
 extern wifi_mac_time_update_cb_t s_wifi_mac_time_update_cb;
 #endif
 
@@ -183,11 +185,12 @@ static inline void phy_update_wifi_mac_time(bool en_clock_stopped, int64_t now)
         s_common_clock_disable_time = (uint32_t)now;
     } else {
         if (s_common_clock_disable_time) {
+#if CONFIG_ESP32_WIFI_ENABLED
             uint32_t diff = (uint64_t)now - s_common_clock_disable_time;
-
             if (s_wifi_mac_time_update_cb) {
                 s_wifi_mac_time_update_cb(diff);
             }
+#endif
             s_common_clock_disable_time = 0;
         }
     }
