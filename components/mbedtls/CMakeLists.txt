@@ -9,7 +9,7 @@ if(NOT BOOTLOADER_BUILD)
 endif()
 
 set(mbedtls_srcs "")
-set(mbedtls_include_dirs "port/include" "mbedtls/include")
+set(mbedtls_include_dirs "port/include")
 
 if(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE)
     list(APPEND mbedtls_srcs "esp_crt_bundle/esp_crt_bundle.c")
